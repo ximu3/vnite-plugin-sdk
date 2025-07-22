@@ -1,0 +1,1 @@
+vnite-plugin-sdk

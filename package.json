@@ -1,0 +1,59 @@
+{
+  "name": "vnite-plugin-sdk",
+  "version": "0.1.0",
+  "description": "Vnite Plugin Development SDK",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "pack": "node scripts/pack-plugin.js",
+    "prepare": "npm run build",
+    "version-patch": "npm version patch",
+    "version-minor": "npm version minor",
+    "version-major": "npm version major"
+  },
+  "keywords": [
+    "vnite",
+    "plugin",
+    "sdk",
+    "visual-novel",
+    "game"
+  ],
+  "author": "ximu3",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "type-fest": "^4.41.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "bin": {
+    "vnite-plugin": "scripts/cli.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ximu3/vnite-plugin-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ximu3/vnite-plugin-sdk/issues"
+  },
+  "homepage": "https://github.com/ximu3/vnite-plugin-sdk#readme"
+}
