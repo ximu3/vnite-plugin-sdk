@@ -134,7 +134,8 @@ async function packPlugin() {
 
     // 创建 .vnpkg 文件
     console.log('\n🗜️  创建压缩包...')
-    const outputFile = path.join(outputDir, `${manifest.id}-${manifest.version}.vnpkg`)
+    const safeId = sanitizeFilename(manifest.id)
+    const outputFile = path.join(outputDir, `${safeId}-${manifest.version}.vnpkg`)
 
     try {
       await createArchive(tempDir, outputFile)
@@ -222,6 +223,17 @@ function getSDKVersion() {
   } catch {
     return '1.0.0'
   }
+}
+
+function sanitizeFilename(input) {
+  if (!input) return ''
+
+  // 替换所有不安全的文件名字符
+  return input
+    .replace(/[\\\/\:\*\?"<>\|]/g, '_') // 替换Windows和POSIX系统不允许的字符
+    .replace(/\s+/g, '_') // 替换空白字符为下划线
+    .replace(/^\.+/, '') // 移除开头的点号 (隐藏文件)
+    .replace(/\.+$/, '') // 移除结尾的点号
 }
 
 packPlugin()
