@@ -1,8 +1,3 @@
-/**
- * IPC 类型定义
- * 严格按照主应用的 IPC 通信定义
- */
-
 import type {
   EventType,
   EventData,
@@ -23,13 +18,56 @@ import type {
   GameMetadataUpdateOptions,
   BatchUpdateGameMetadataProgress
 } from './scraper'
-import { configDocs } from './models'
-import { PluginConfiguration } from './plugin'
+import { configDocs, BatchGameInfo } from './models'
+import {
+  PluginConfiguration,
+  PluginInfo,
+  PluginSearchOptions,
+  PluginSearchResult,
+  PluginInstallOptions,
+  PluginUpdateInfo,
+  PluginStatsData
+} from './plugin'
 import type { SteamFormattedGameInfo } from './importer'
 import type { UpdateCheckResult, ProgressInfo } from './updater'
 import type { OverallScanProgress } from './system'
 
-// 定义文件对话框属性类型
+type IpcListenEventMap = {
+  [key: string]: [...args: any[]]
+}
+type IpcHandleEventMap = {
+  [key: string]: (...args: any[]) => any
+}
+type ExtractArgs<T> = T extends IpcListenEventMap ? T : never
+type ExtractHandler<T> = T extends IpcHandleEventMap ? T : never
+
+export interface IIpcManager {
+  on<E extends keyof ExtractArgs<IpcMainEvents>>(
+    channel: Extract<E, string>,
+    listener: (
+      e: any, // Electron.IpcMainEvent
+      ...args: ExtractArgs<IpcMainEvents>[E]
+    ) => void | Promise<void>
+  ): void
+
+  handle<E extends keyof ExtractHandler<IpcMainEvents>>(
+    channel: Extract<E, string>,
+    listener: (
+      e: any, // Electron.IpcMainInvokeEvent
+      ...args: Parameters<ExtractHandler<IpcMainEvents>[E]>
+    ) =>
+      | ReturnType<ExtractHandler<IpcMainEvents>[E]>
+      | Promise<ReturnType<ExtractHandler<IpcMainEvents>[E]>>
+  ): void
+
+  send<E extends keyof IpcRendererEvents>(
+    channel: Extract<E, string>,
+    ...args: IpcRendererEvents[E]
+  ): void
+
+  removeHandler<E extends keyof IpcMainEvents>(channel: Extract<E, string>): void
+}
+
 export type FileDialogProperties = Array<
   | 'openFile'
   | 'openDirectory'
@@ -42,13 +80,10 @@ export type FileDialogProperties = Array<
   | 'dontAddToRecent'
 >
 
-export interface BatchGameInfo {
-  id: string
-  name: string
-  path: string
-  status: 'pending' | 'processing' | 'completed' | 'error'
-  error?: string
-}
+/**
+ * IPC Events Type Definitions
+ * Define all IPC communication contracts between main and renderer processes
+ */
 
 // Main process IPC events - handled by main process
 type MainIpcEvents =
@@ -110,6 +145,7 @@ type MainIpcEvents =
       }) => string
       'utils:save-game-icon-by-file': (gameId: string, filePath: string) => void
       'utils:download-temp-image': (url: string) => string
+      'utils:save-clipboard-image': () => string
       'utils:get-app-log-contents-in-current-lifetime': () => string
       'utils:copy-app-log-in-current-lifetime-to-clipboard-as-file': () => void
       'utils:open-log-path-in-explorer': () => void
@@ -233,7 +269,7 @@ type MainIpcEvents =
 
       // Theme events
       'theme:save': (cssContent: string) => void
-      'theme:load': () => string
+      'theme:load': () => string | null
       'theme:select-preset': (preset: string) => string
 
       // Updater events
@@ -243,25 +279,23 @@ type MainIpcEvents =
       'updater:update-config': () => void
 
       // EventBus IPC handlers
-      'eventbus:emit': <T extends EventType>(
+      'events:emit': <T extends EventType>(
         eventType: T,
         data: EventData<T>,
         options: { source: string; correlationId?: string }
       ) => boolean
-      'eventbus:query-history': (options?: EventHistoryQuery) => EventHistoryEntry[]
-      'eventbus:get-total-events': () => number
-      'eventbus:get-events-by-type': () => Record<string, number>
-      'eventbus:get-recent-events': (limit?: number) => EventHistoryEntry[]
-      'eventbus:clear-history': () => void
-      'eventbus:get-history-stats': () => {
+      'events:query-history': (options?: EventHistoryQuery) => EventHistoryEntry[]
+      'events:get-total-events': () => number
+      'events:get-events-by-type': () => Record<string, number>
+      'events:get-recent-events': (limit?: number) => EventHistoryEntry[]
+      'events:clear-history': () => void
+      'events:get-history-stats': () => {
         totalEvents: number
         uniqueEventTypes: number
         oldestEvent?: EventHistoryEntry
         newestEvent?: EventHistoryEntry
         averageEventsPerMinute: number
       }
-
-      'monitor:stop-game': (gameId: string) => void
 
       'scanner:scan-all': () => OverallScanProgress
       'scanner:scan-scanner': (scannerId: string) => OverallScanProgress
@@ -294,43 +328,23 @@ type MainIpcEvents =
       'scanner:ignore-failed-folder': (scannerId: string, folderPath: string) => OverallScanProgress
 
       // Plugin events
-      'plugin:initialize': () => { success: boolean; error?: string }
-      'plugin:get-all-plugins': () => any[]
-      'plugin:get-plugin': (pluginId: string) => any
-      'plugin:search-plugins': (keyword: string) => Array<{
-        id: string
-        name: string
-        version: string
-        description?: string
-        author?: string
-        source: 'local' | 'registry'
-        installed: boolean
-      }>
+      'plugin:get-all-plugins': () => Omit<PluginInfo, 'instance'>[]
+      'plugin:get-plugin': (pluginId: string) => Omit<PluginInfo, 'instance'> | undefined
+      'plugin:search-plugins': (options: PluginSearchOptions) => PluginSearchResult
       'plugin:install-plugin': (
         source: string,
-        options?: { autoEnable?: boolean }
+        options?: PluginInstallOptions
       ) => { success: boolean; error?: string }
       'plugin:install-plugin-from-file': (
         filePath: string,
-        options?: { autoEnable?: boolean }
+        options?: PluginInstallOptions
       ) => { success: boolean; error?: string }
       'plugin:uninstall-plugin': (pluginId: string) => { success: boolean; error?: string }
       'plugin:activate-plugin': (pluginId: string) => { success: boolean; error?: string }
       'plugin:deactivate-plugin': (pluginId: string) => { success: boolean; error?: string }
-      'plugin:check-updates': () => Array<{
-        pluginId: string
-        currentVersion: string
-        latestVersion: string
-        updateAvailable: boolean
-      }>
-      'plugin:get-stats': () => {
-        total: number
-        enabled: number
-        disabled: number
-        error: number
-      }
+      'plugin:check-updates': () => PluginUpdateInfo[]
+      'plugin:get-stats': () => PluginStatsData
       'plugin:get-plugin-configuration': (pluginId: string) => PluginConfiguration[]
-      'plugin:shutdown': () => { success: boolean; error?: string }
     }
 
 // Renderer process IPC events - handled by renderer process
@@ -370,7 +384,7 @@ type RendererIpcEvents = {
   'updater:update-downloaded': []
 
   // EventBus events forwarded from main process
-  'eventbus:event-emitted': [eventType: EventType, data: EnhancedEventData<EventType>]
+  'events:event-emitted': [eventType: EventType, data: EnhancedEventData<EventType>]
 
   'game:exiting': [gameId: string]
   'game:exited': [gameId: string]
@@ -401,6 +415,9 @@ type RendererIpcEvents = {
   'scanner:scan-resumed': [progress: OverallScanProgress]
 
   'adder:batch-update-game-metadata-progress': [progress: BatchUpdateGameMetadataProgress]
+
+  'plugin:update-all-plugins': [plugins: Omit<PluginInfo, 'instance'>[]]
+  'plugin:update-plugin-stats': [stats: PluginStatsData]
 }
 
 // Export main IPC events interface

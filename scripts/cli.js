@@ -2,7 +2,7 @@
 
 /**
  * Vnite Plugin SDK CLI
- * 主命令行工具，支持多个子命令
+ * Main command line tool, supports multiple sub-commands
  */
 
 const { spawn } = require('child_process')
@@ -10,23 +10,23 @@ const path = require('path')
 
 function showHelp() {
   console.log(`
-🚀 Vnite Plugin SDK CLI
+Vnite Plugin SDK CLI
 
-用法:
+Usage:
   npx vnite-plugin-sdk <command> [options]
 
-命令:
-  pack [path]      打包插件为 .vnpkg 文件
-  help            显示帮助信息
+Commands:
+  pack [path]      Package plugin as .vnpkg file
+  help            Show help information
 
-示例:
+Examples:
   npx vnite-plugin-sdk pack ./my-plugin
   npx vnite-plugin-sdk help
 
-创建新插件:
+Create new plugin:
   npm create vnite-plugin [my-plugin]
 
-更多信息:
+More information:
   GitHub: https://github.com/ximu3/vnite-plugin-sdk
   `)
 }
@@ -42,7 +42,7 @@ function runScript(scriptPath, args = []) {
       if (code === 0) {
         resolve()
       } else {
-        reject(new Error(`命令执行失败，退出码: ${code}`))
+        reject(new Error(`Command execution failed, exit code: ${code}`))
       }
     })
 
@@ -64,19 +64,19 @@ async function main() {
   try {
     switch (command) {
       case 'pack':
-        // 调用打包脚本
+        // Call packaging script
         const packScript = path.join(__dirname, 'pack-plugin.js')
         await runScript(packScript, commandArgs)
         break
 
       default:
-        console.error(`❌ 未知命令: ${command}`)
-        console.log('使用 "npm create @vnite/plugin" 创建新插件')
-        console.log('运行 "npx @vnite/plugin-sdk help" 查看可用命令')
+        console.error(`Unknown command: ${command}`)
+        console.log('Use "npm create @vnite/plugin" to create a new plugin')
+        console.log('Run "npx @vnite/plugin-sdk help" to see available commands')
         process.exit(1)
     }
   } catch (error) {
-    console.error('❌ 命令执行失败:', error.message)
+    console.error('Command execution failed:', error.message)
     process.exit(1)
   }
 }

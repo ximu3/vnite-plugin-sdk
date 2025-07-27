@@ -1,8 +1,3 @@
-/**
- * 系统相关类型定义
- * 从主应用 src/types/utils/common.d.ts 复制而来
- */
-
 export type ScanStatus = 'idle' | 'scanning' | 'completed' | 'error'
 
 export interface ScannerProgress {

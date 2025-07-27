@@ -1,8 +1,3 @@
-/**
- * Importer 相关类型定义
- * 从主应用 src/main/features/importer/services/steam/types.ts 复制而来
- */
-
 export interface GetOwnedGamesResponse {
   response: {
     game_count: number

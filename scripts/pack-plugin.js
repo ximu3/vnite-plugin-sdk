@@ -5,55 +5,55 @@ const path = require('path')
 const archiver = require('archiver')
 
 /**
- * 打包插件脚本
+ * Plugin packaging script
  */
 async function packPlugin() {
-  console.log('📦 打包 Vnite 插件\n')
+  console.log('Packaging Vnite Plugin\n')
 
   try {
     const cwd = process.cwd()
     const manifestPath = path.join(cwd, 'package.json')
 
-    // 检查是否存在 package.json
+    // Check if package.json exists
     if (!fs.existsSync(manifestPath)) {
       throw new Error('package.json not found in current directory')
     }
 
-    // 读取 manifest
+    // Read manifest
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
 
-    // 验证必需字段
+    // Validate required fields
     if (!manifest.id || !manifest.name || !manifest.version || !manifest.main) {
       throw new Error('Invalid package.json: missing required fields (id, name, version, main)')
     }
 
-    console.log(`插件名称: ${manifest.name}`)
-    console.log(`插件ID: ${manifest.id}`)
-    console.log(`版本: ${manifest.version}`)
-    console.log(`主文件: ${manifest.main}`)
+    console.log(`Plugin name: ${manifest.name}`)
+    console.log(`Plugin ID: ${manifest.id}`)
+    console.log(`Version: ${manifest.version}`)
+    console.log(`Main file: ${manifest.main}`)
 
-    // 检查主文件是否存在
+    // Check if main file exists
     const mainFile = path.join(cwd, manifest.main)
     if (!fs.existsSync(mainFile)) {
       throw new Error(`Main file not found: ${manifest.main}`)
     }
 
-    // 创建输出目录
+    // Create output directory
     const outputDir = path.join(cwd, 'dist')
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    // 创建临时打包目录
+    // Create temporary packaging directory
     const tempDir = path.join(outputDir, '.temp-package')
     if (fs.existsSync(tempDir)) {
       fs.rmSync(tempDir, { recursive: true })
     }
     fs.mkdirSync(tempDir, { recursive: true })
 
-    console.log('\n📋 复制文件...')
+    console.log('\nCopying files...')
 
-    // 定义要包含的文件/目录
+    // Define files/directories to include
     const includePatterns = [
       'dist/*.js',
       'dist/*.js.map',
@@ -66,12 +66,12 @@ async function packPlugin() {
       'assets/**/*'
     ]
 
-    // 复制文件
+    // Copy files
     for (const pattern of includePatterns) {
       try {
         const sourcePath = path.join(cwd, pattern)
         if (pattern.includes('*')) {
-          // 处理通配符
+          // Handle wildcards
           const dir = path.dirname(pattern)
           const fileName = path.basename(pattern)
           const sourceDir = path.join(cwd, dir)
@@ -83,7 +83,7 @@ async function packPlugin() {
                 const src = path.join(sourceDir, file)
                 const dest = path.join(tempDir, dir, file)
 
-                // 确保目标目录存在
+                // Ensure target directory exists
                 const destDir = path.dirname(dest)
                 if (!fs.existsSync(destDir)) {
                   fs.mkdirSync(destDir, { recursive: true })
@@ -97,7 +97,7 @@ async function packPlugin() {
             }
           }
         } else {
-          // 直接复制文件
+          // Direct file copy
           if (fs.existsSync(sourcePath)) {
             const dest = path.join(tempDir, pattern)
             const destDir = path.dirname(dest)
@@ -116,13 +116,13 @@ async function packPlugin() {
           }
         }
       } catch (error) {
-        // 忽略可选文件的错误
+        // Ignore errors for optional files
         console.log(`  ~ ${pattern} (optional, skipped)`)
       }
     }
 
-    // 生成最终的 manifest.json
-    console.log('\n📝 生成 manifest.json...')
+    // Generate final manifest.json
+    console.log('\nGenerating manifest.json...')
     const finalManifest = {
       ...manifest,
       packagedAt: new Date().toISOString(),
@@ -132,8 +132,8 @@ async function packPlugin() {
     fs.writeFileSync(path.join(tempDir, 'manifest.json'), JSON.stringify(finalManifest, null, 2))
     console.log('  ✓ manifest.json')
 
-    // 创建 .vnpkg 文件
-    console.log('\n🗜️  创建压缩包...')
+    // Create .vnpkg file
+    console.log('\nCreating archive...')
     const safeId = sanitizeFilename(manifest.id)
     const outputFile = path.join(outputDir, `${safeId}-${manifest.version}.vnpkg`)
 
@@ -144,30 +144,30 @@ async function packPlugin() {
       throw new Error(`Failed to create package: ${error.message}`)
     }
 
-    // 清理临时文件
+    // Clean up temporary files
     fs.rmSync(tempDir, { recursive: true })
 
-    // 显示文件大小
+    // Display file size
     const stats = fs.statSync(outputFile)
     const fileSize = (stats.size / 1024).toFixed(2)
 
-    console.log('\n✅ 打包完成!')
-    console.log(`📦 文件: ${path.relative(cwd, outputFile)}`)
-    console.log(`📏 大小: ${fileSize} KB`)
+    console.log('\nPackaging complete!')
+    console.log(`File: ${path.relative(cwd, outputFile)}`)
+    console.log(`Size: ${fileSize} KB`)
   } catch (error) {
-    console.error('❌ 打包失败:', error.message)
+    console.error('Packaging failed:', error.message)
     process.exit(1)
   }
 }
 
 /**
- * 使用 archiver 创建压缩包
+ * Create archive using archiver
  */
 function createArchive(sourceDir, outputFile) {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outputFile)
     const archive = archiver('zip', {
-      zlib: { level: 9 } // 设置最高压缩级别
+      zlib: { level: 9 } // Set maximum compression level
     })
 
     output.on('close', () => {
@@ -184,7 +184,7 @@ function createArchive(sourceDir, outputFile) {
 
     archive.pipe(output)
 
-    // 添加目录中的所有文件
+    // Add all files in the directory
     archive.directory(sourceDir, false)
 
     archive.finalize()
@@ -192,7 +192,7 @@ function createArchive(sourceDir, outputFile) {
 }
 
 /**
- * 递归复制目录
+ * Recursively copy directory
  */
 function copyDirRecursive(src, dest) {
   if (!fs.existsSync(dest)) {
@@ -213,7 +213,7 @@ function copyDirRecursive(src, dest) {
 }
 
 /**
- * 获取 SDK 版本
+ * Get SDK version
  */
 function getSDKVersion() {
   try {
@@ -228,12 +228,12 @@ function getSDKVersion() {
 function sanitizeFilename(input) {
   if (!input) return ''
 
-  // 替换所有不安全的文件名字符
+  // Replace all unsafe filename characters
   return input
-    .replace(/[\\\/\:\*\?"<>\|]/g, '_') // 替换Windows和POSIX系统不允许的字符
-    .replace(/\s+/g, '_') // 替换空白字符为下划线
-    .replace(/^\.+/, '') // 移除开头的点号 (隐藏文件)
-    .replace(/\.+$/, '') // 移除结尾的点号
+    .replace(/[\\\/\:\*\?"<>\|]/g, '_') // Replace Windows and POSIX disallowed characters
+    .replace(/\s+/g, '_') // Replace whitespace with underscore
+    .replace(/^\.+/, '') // Remove leading dots (hidden files)
+    .replace(/\.+$/, '') // Remove trailing dots
 }
 
 packPlugin()

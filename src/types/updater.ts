@@ -1,9 +1,3 @@
-/**
- * Updater 相关类型定义
- * 从 electron-updater 库导入的类型
- */
-
-// 从 electron-updater 复制的类型定义
 export interface UpdateCheckResult {
   readonly updateInfo: UpdateInfo
   readonly downloadPromise?: Promise<Array<string>> | null

@@ -1,4 +1,71 @@
-// 事件元数据接口
+export interface IEventBus {
+  emit<T extends EventType>(
+    eventType: T,
+    data: EventData<T>,
+    options: {
+      source: string
+      correlationId?: string
+    }
+  ): boolean
+  on<T extends EventType>(
+    eventType: T,
+    handler: (data: EnhancedEventData<T>) => void | Promise<void>
+  ): () => void
+  once<T extends EventType>(
+    eventType: T,
+    handler: (data: EnhancedEventData<T>) => void | Promise<void>
+  ): () => void
+  off<T extends EventType>(
+    eventType: T,
+    handler: (data: EnhancedEventData<T>) => void | Promise<void>
+  ): void
+  waitFor<T extends EventType>(
+    eventType: T,
+    timeout?: number,
+    condition?: (data: EnhancedEventData<T>) => boolean
+  ): Promise<EnhancedEventData<T>>
+  emitBatch<T extends EventType>(
+    events: Array<{
+      eventType: T
+      data: EventData<T>
+      options?: {
+        source: string
+        correlationId?: string
+      }
+    }>
+  ): void
+  queryHistory(options?: EventHistoryQuery): EventHistoryEntry[]
+  getTotalEvents(): number
+  getEventsByType(): Record<string, number>
+  getRecentEvents(limit?: number): EventHistoryEntry[]
+  clearHistory(): void
+  exportHistory(): EventHistoryEntry[]
+  getHistoryStats(): {
+    totalEvents: number
+    uniqueEventTypes: number
+    oldestEvent?: EventHistoryEntry
+    newestEvent?: EventHistoryEntry
+    averageEventsPerMinute: number
+  }
+}
+
+export interface EventHistoryEntry {
+  eventType: EventType
+  data: EnhancedEventData<EventType>
+  timestamp: number
+  id: string
+}
+
+export interface EventHistoryQuery {
+  eventType?: EventType
+  limit?: number
+  offset?: number
+  fromTimestamp?: number
+  toTimestamp?: number
+  source?: string
+  correlationId?: string
+}
+
 export interface EventMetadata {
   id: string
   timestamp: number
@@ -6,11 +73,9 @@ export interface EventMetadata {
   correlationId?: string
 }
 
-// 所有应用事件类型定义
 export interface AppEvents {
   'app:ready': undefined
 
-  // ========== 游戏相关事件 ==========
   'game:added': {
     gameId: string
     name: string
@@ -35,7 +100,6 @@ export interface AppEvents {
     name: string
   }
 
-  // Game save events
   'game:save-created': {
     gameId: string
     saveId: string
@@ -51,7 +115,6 @@ export interface AppEvents {
     saveId: string
   }
 
-  // Game memory events
   'game:memory-created': {
     gameId: string
     memoryId: string
@@ -89,7 +152,6 @@ export interface AppEvents {
     removeData: boolean
   }
 
-  // ========== 扫描器相关事件 ==========
   'scanner:started': {
     scannerId: string
     scannerPath: string
@@ -119,7 +181,6 @@ export interface AppEvents {
     newLanguage: string
   }
 
-  // ========== 插件相关事件 ==========
   'plugin:loaded': {
     pluginId: string
     pluginName: string
@@ -140,9 +201,6 @@ export interface AppEvents {
     canRecover: boolean
   }
 
-  // ========== 数据库相关事件 ==========
-
-  // Database backup events
   'db:backup-completed': {
     targetPath: string
   }
@@ -174,9 +232,8 @@ export interface EventHistoryQuery {
   correlationId?: string
 }
 
-// 事件类型联合类型
 export type EventType = keyof AppEvents
 export type EventData<T extends EventType> = AppEvents[T]
 
-// 增强的事件数据（包含元数据）
+// Enhanced event data with metadata
 export type EnhancedEventData<T extends EventType> = AppEvents[T] & EventMetadata
