@@ -1,6 +1,6 @@
 # vnite-plugin-sdk
 
-[简体中文](README.zh-CN.md)
+[English](README.md) | [简体中文](README.zh-CN.md)
 
 The Vnite plugin development toolkit provides complete type definitions for the APIs that Vnite passes to plugins.
 

@@ -1,6 +1,6 @@
 # vnite-plugin-sdk
 
-[English](README.md)
+[English](README.md) | [简体中文](README.zh-CN.md)
 
 Vnite 插件开发工具包，提供了 Vnite 传递给插件的 api 的完整类型定义。
 
