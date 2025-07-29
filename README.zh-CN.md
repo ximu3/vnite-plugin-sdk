@@ -1,18 +1,18 @@
 # vnite-plugin-sdk
 
-[简体中文](README.zh-CN.md)
+[English](README.md)
 
-The Vnite plugin development toolkit provides complete type definitions for the APIs that Vnite passes to plugins.
+Vnite 插件开发工具包，提供了 Vnite 传递给插件的 api 的完整类型定义。
 
-## Installation
+## 安装
 
 ```bash
 npm install -D vnite-plugin-sdk
 ```
 
-## Usage
+## 使用
 
-It's recommended to use the [create-vnite-plugin](https://github.com/ximu3/create-vnite-plugin) scaffold to create plugin projects.
+推荐使用 [create-vnite-plugin](https://github.com/ximu3/create-vnite-plugin) 脚手架来创建插件项目。
 
 ```typescript
 import type { IPluginAPI } from 'vnite-plugin-sdk'
