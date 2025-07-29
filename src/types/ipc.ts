@@ -126,6 +126,7 @@ type MainIpcEvents =
       'system:check-admin-permissions': () => boolean
       'system:check-if-portable-directory-needs-admin-rights': () => boolean
       'system:get-fonts': () => string[]
+      'system:update-screenshot-hotkey': (hotkey: string) => void
 
       'app:update-language': (language: string) => void
       'app:get-app-version': () => string
@@ -167,7 +168,7 @@ type MainIpcEvents =
       // Database backup & restore events
       'db:backup': (targetPath: string) => void
       'db:restore': (sourcePath: string) => void
-      'db:get-couchdb-size': () => number
+      'db:get-couchdb-size': (refreshCache?: boolean) => number
       'db:set-config-background': (path: string, theme: 'dark' | 'light') => void
       'db:check-attachment': (dbName: string, docId: string, attachmentId: string) => boolean
       'db:get-all-docs': (dbName: string) => Record<string, any>
@@ -180,6 +181,7 @@ type MainIpcEvents =
         data: any
         timestamp: number
       }) => void
+      'db:compact-remote-database': () => void
 
       // Game save management events
       'game:backup-save': (gameId: string) => string
