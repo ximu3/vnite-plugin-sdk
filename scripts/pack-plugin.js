@@ -63,7 +63,8 @@ async function packPlugin() {
       'LICENSE',
       'icon.png',
       'icon.ico',
-      'assets/**/*'
+      'assets/**/*',
+      'dist/*.node'
     ]
 
     // Copy files
